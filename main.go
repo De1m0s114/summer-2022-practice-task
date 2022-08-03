@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -59,18 +60,39 @@ func Parse() Trains {
 func main() {
 	//time like string
 	//	... запит даних від користувача
-	result, _ := FindTrains("1902", "1929", "departure-time")
+	result, err := FindTrains("12", "1929", "price")
 	//	... обробка помилки
 	//	... друк result
-	for i, _ := range result {
-		fmt.Printf("{TrainID: %v, DepartureStationID: %v, ArrivalStationID: %v, Price: %v, ArrivalTime: %v, DepartureTime: %v}\n", result[i].TrainID, result[i].DepartureStationID, result[i].ArrivalStationID, result[i].Price, result[i].ArrivalTime, result[i].DepartureTime)
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		for i, _ := range result {
+			fmt.Printf("{TrainID: %v, DepartureStationID: %v, ArrivalStationID: %v, Price: %v, ArrivalTime: %v, DepartureTime: %v}\n", result[i].TrainID, result[i].DepartureStationID, result[i].ArrivalStationID, result[i].Price, result[i].ArrivalTime, result[i].DepartureTime)
+		}
 	}
+
 }
 
 func FindTrains(departureStation, arrivalStation, criteria string) (Trains, error) {
 	// ... код
-	intDepartureStation, _ := strconv.Atoi(departureStation)
-	intArrivalStation, _ := strconv.Atoi(arrivalStation)
+	for i := 0; i < len(departureStation); i++ {
+		if departureStation[i] < 48 || departureStation[i] > 57 {
+			return nil, errors.New("bad departure station input")
+		}
+	}
+	for i := 0; i < len(arrivalStation); i++ {
+		if arrivalStation[i] < 48 || arrivalStation[i] > 57 {
+			return nil, errors.New("bad arrival station input")
+		}
+	}
+	intDepartureStation, err := strconv.Atoi(departureStation)
+	if err != nil {
+		return nil, errors.New("empty departure station")
+	}
+	intArrivalStation, err := strconv.Atoi(arrivalStation)
+	if err != nil {
+		return nil, errors.New("empty arrival station")
+	}
 	trains := Parse()
 	var suitable_trains Trains
 
@@ -104,7 +126,13 @@ func FindTrains(departureStation, arrivalStation, criteria string) (Trains, erro
 				}
 			}
 		}
+	} else {
+		return nil, errors.New("unsupported criteria")
+	}
+	if len(suitable_trains) > 3 {
+		return suitable_trains[0:3], nil // маєте повернути правильні значення
+	} else {
+		return suitable_trains, nil
 	}
 
-	return suitable_trains[0:3], nil // маєте повернути правильні значення
 }
